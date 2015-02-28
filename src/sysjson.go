@@ -21,7 +21,7 @@ func main() {
 	mux.HandleFunc("/", statsHandler)
 
 	log.Printf("[notice] Starting sys.json on %s...", *listenAddr)
-	http.ListenAndServe(":3000", mux)
+	http.ListenAndServe(*listenAddr, mux)
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
