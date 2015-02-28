@@ -1,4 +1,4 @@
-# sys.json
+![sys.json](img/sysjson.png)
 
 Exposes system stats as a JSON API.
 
