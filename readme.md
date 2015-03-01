@@ -5,6 +5,19 @@ Exposes system stats as a JSON API.
 It works, but it's a work in progress. Things are subject to change
 without notice.
 
+## Why?
+
+There are plenty of other tools out there that can give you stats. There's SNMP, dozens of monitoring
+solutions and stat collection agents, and more.
+
+All of these solutions vary drastically in complexity and ease of use, many times sacrificing
+one for the other. The goal of sys.json is to provide a simple API for querying a server about the
+stats you're interested in. No more, no less. What you do with that data is up to you. Some ideas include:
+
+* Alerts
+* Creating graphs
+* Capacity analysis
+
 ## Running It
 
 ```bash
