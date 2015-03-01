@@ -10,9 +10,9 @@ caution if you use this in production.
 There are plenty of other tools out there that can give you stats. There's SNMP, dozens of monitoring
 solutions and stat collection agents, and more. So why this?
 
-All of these solutions vary drastically in complexity and ease of use, many times sacrificing
-one for the other. The goal of sys.json is to provide a simple API for querying a server about the
-stats you're interested in. No more, no less. What you do with that data is up to you.
+Many of these solutions are complicated to setup and get data from. The goal of sys.json is to
+provide a simple API for querying a server about the stats you're interested in. No more, no less.
+What you do with that data is up to you.
 
 ## Running It
 
