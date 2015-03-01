@@ -3,7 +3,7 @@
 Exposes system stats as a JSON API.
 
 It works, but it's a work in progress. Things are subject to change without notice, so please use
-caution if you use this in production.
+caution if you use this in production. Assume there are bugs.
 
 ## Why?
 
