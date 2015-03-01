@@ -13,8 +13,8 @@ func main() {
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
-	loadAvgs := proc.GetLoadAvg()
-	memory := proc.GetMemInfo()
+	load := proc.GetLoadAvg()
+	mem := proc.GetMemInfo()
 	uptime := proc.GetUptime()
 
 	resp := map[string]interface{}{}
@@ -23,68 +23,68 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"idle":  uptime["idle"],
 	}
 	resp["load_avgs"] = map[string]interface{}{
-		"1m":  loadAvgs["1m"],
-		"5m":  loadAvgs["5m"],
-		"15m": loadAvgs["15m"],
+		"1m":  load["1m"],
+		"5m":  load["5m"],
+		"15m": load["15m"],
 	}
 	resp["processes"] = map[string]interface{}{
-		"running":  loadAvgs["prunning"],
-		"sleeping": loadAvgs["ptotal"].(int) - loadAvgs["prunning"].(int),
-		"total":    loadAvgs["ptotal"],
-		"last_pid": loadAvgs["lastpid"],
+		"running":  load["prunning"],
+		"sleeping": load["ptotal"].(int) - load["prunning"].(int),
+		"total":    load["ptotal"],
+		"last_pid": load["lastpid"],
 	}
-	resp["memory"] = map[string]interface{}{
+	resp["mem"] = map[string]interface{}{
 		"simple": map[string]interface{}{
-			"total":       memory["MemTotal"],
-			"free":        memory["MemFree"],
-			"buffers":     memory["Buffers"],
-			"cached":      memory["Cached"],
-			"swap_cached": memory["SwapCached"],
-			//"free_total":  memory["MemFree"].(int) + memory["Buffers"].(int) + memory["Cached"].(int),
+			"total":       mem["MemTotal"],
+			"free":        mem["MemFree"],
+			"buffers":     mem["Buffers"],
+			"cached":      mem["Cached"],
+			"swap_cached": mem["SwapCached"],
+			"free_total":  mem["MemFree"].(int) + mem["Buffers"].(int) + mem["Cached"].(int),
 		},
-		"active":        memory["Active"],
-		"inactive":      memory["Inactive"],
-		"active_anon":   memory["Active(anon)"],
-		"inactive_anon": memory["Inactive(anon)"],
-		"active_file":   memory["Active(file)"],
-		"inactive_file": memory["Inactive(file)"],
-		"unevictable":   memory["Unevictable"],
-		"mlocked":       memory["Mlocked"],
+		"active":        mem["Active"],
+		"inactive":      mem["Inactive"],
+		"active_anon":   mem["Active(anon)"],
+		"inactive_anon": mem["Inactive(anon)"],
+		"active_file":   mem["Active(file)"],
+		"inactive_file": mem["Inactive(file)"],
+		"unevictable":   mem["Unevictable"],
+		"mlocked":       mem["Mlocked"],
 		"swap": map[string]interface{}{
-			"total": memory["SwapTotal"],
-			"free":  memory["SwapFree"],
+			"total": mem["SwapTotal"],
+			"free":  mem["SwapFree"],
 		},
-		"dirty":         memory["Dirty"],
-		"writeback":     memory["Writeback"],
-		"anon_pages":    memory["AnonPages"],
-		"mapped":        memory["Mapped"],
-		"shmem":         memory["Shmem"],
-		"slab":          memory["Slab"],
-		"s_reclaimable": memory["SReclaimable"],
-		"s_unreclaim":   memory["SUnreclaim"],
-		"kernel_stack":  memory["KernelStack"],
-		"nfs_unstable":  memory["NFS_Unstable"],
-		"bounce":        memory["Bounce"],
-		"writeback_tmp": memory["WritebackTmp"],
-		"commit_limit":  memory["CommitLimit"],
-		"commited_as":   memory["Committed_AS"],
+		"dirty":         mem["Dirty"],
+		"writeback":     mem["Writeback"],
+		"anon_pages":    mem["AnonPages"],
+		"mapped":        mem["Mapped"],
+		"shmem":         mem["Shmem"],
+		"slab":          mem["Slab"],
+		"s_reclaimable": mem["SReclaimable"],
+		"s_unreclaim":   mem["SUnreclaim"],
+		"kernel_stack":  mem["KernelStack"],
+		"nfs_unstable":  mem["NFS_Unstable"],
+		"bounce":        mem["Bounce"],
+		"writeback_tmp": mem["WritebackTmp"],
+		"commit_limit":  mem["CommitLimit"],
+		"commited_as":   mem["Committed_AS"],
 		"vmalloc": map[string]interface{}{
-			"total": memory["VmallocTotal"],
-			"used":  memory["VmallocUsed"],
-			"chunk": memory["VmallocChunk"],
+			"total": mem["VmallocTotal"],
+			"used":  mem["VmallocUsed"],
+			"chunk": mem["VmallocChunk"],
 		},
-		"anon_huge_pages": memory["AnonHugePages"],
+		"anon_huge_pages": mem["AnonHugePages"],
 		"huge_pages": map[string]interface{}{
-			"total": memory["HugePages_Total"],
-			"free":  memory["HugePages_Free"],
-			"rsvd":  memory["HugePages_Rsvd"],
-			"surp":  memory["HugePages_Surp"],
+			"total": mem["HugePages_Total"],
+			"free":  mem["HugePages_Free"],
+			"rsvd":  mem["HugePages_Rsvd"],
+			"surp":  mem["HugePages_Surp"],
 		},
-		"huge_page_size": memory["Hugepagesize"],
+		"huge_page_size": mem["Hugepagesize"],
 		"direct_map": map[string]interface{}{
-			"4k": memory["DirectMap4k"],
-			"2M": memory["DirectMap2M"],
-			"1G": memory["DirectMap1G"],
+			"4k": mem["DirectMap4k"],
+			"2M": mem["DirectMap2M"],
+			"1G": mem["DirectMap1G"],
 		},
 	}
 
