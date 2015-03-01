@@ -1,7 +1,6 @@
 package proc
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -9,71 +8,70 @@ import (
 	"unicode"
 )
 
-type fieldMap map[string]interface{}
+type FieldMap map[string]interface{}
 
-func GetLoadAvg() fieldMap {
-	return getFieldMap(readFile("/proc/loadavg"), func(fieldMap fieldMap, fields []string) {
+func (fm FieldMap) Map(fn func(collector FieldMap, key string, value FieldMap)) map[string]interface{} {
+	collector := map[string]interface{}{}
+
+	for k, v := range fm {
+		fn(collector, k, v.(FieldMap))
+	}
+
+	return collector
+}
+
+func GetLoadAvg() FieldMap {
+	return getFieldMap(readFile("/proc/loadavg"), func(fm FieldMap, fields []string) {
 		processes := strings.Split(fields[3], "/")
 
-		fieldMap["1m"] = parse(fields[0], "float")
-		fieldMap["5m"] = parse(fields[1], "float")
-		fieldMap["15m"] = parse(fields[2], "float")
-		fieldMap["prunning"] = parse(processes[0], "int")
-		fieldMap["ptotal"] = parse(processes[1], "int")
-		fieldMap["lastpid"] = parse(fields[4], "int")
+		fm["1m"] = parse(fields[0], "float")
+		fm["5m"] = parse(fields[1], "float")
+		fm["15m"] = parse(fields[2], "float")
+		fm["prunning"] = parse(processes[0], "int")
+		fm["lastpid"] = parse(fields[4], "int")
 	})
 }
 
-func GetProcessesTree() fieldMap {
-	fm := fieldMap{}
+func GetProcessesTree() FieldMap {
+	fm := FieldMap{}
+	pids := getPids()
 
-	procFiles, _ := ioutil.ReadDir("/proc/")
-	for _, procFile := range procFiles {
-		if pid := parse(procFile.Name(), "int"); pid != 0 {
-			cmdLine := string(readFile("/proc/" + procFile.Name() + "/cmdline"))
-			strippedCmdLine := strings.FieldsFunc(cmdLine, func(r rune) bool {
-				return !unicode.IsPrint(r)
-			})
-			status := getFieldMap(readFile("/proc/"+procFile.Name()+"/status"), func(fm fieldMap, fields []string) {
-				if len(fields) > 1 {
-					fm[strings.TrimRight(fields[0], ":")] = fields[1]
-				}
-			})
-			fm[procFile.Name()] = fieldMap{
-				"cmdline": strings.Join(strippedCmdLine, " "),
-				"status":  status,
-			}
+	for _, pid := range pids {
+		info := getProcessInfo(string(pid))
+		fm[string(pid)] = FieldMap{
+			"name":    info["Name"],
+			"cmdline": info["CmdLine"],
+			"state":   info["State"],
+			"pid":     parse(info["Pid"].(string), "int"),
+			"ppid":    parse(info["PPid"].(string), "int"),
+			"threads": parse(info["Threads"].(string), "int"),
 		}
 	}
 
 	return fm
 }
 
-func GetDiskInfo() fieldMap {
+func GetDiskInfo() FieldMap {
 	var partitions []string
 
-	getFieldMap(readFile("/proc/partitions"), func(fm fieldMap, fields []string) {
+	getFieldMap(readFile("/proc/partitions"), func(fm FieldMap, fields []string) {
 		if fields[0] != "major" {
 			partitions = append(partitions, fields[3])
 		}
 	})
 
-	return getFieldMap(readFile("/proc/diskstats"), func(fm fieldMap, fields []string) {
+	return getFieldMap(readFile("/proc/diskstats"), func(fm FieldMap, fields []string) {
 		for _, partition := range partitions {
 			if fields[2] == partition {
-				fm[partition] = fieldMap{
-					"reads": fieldMap{
-						"completed": parse(fields[3], "int"),
-						"merged":    parse(fields[4], "int"),
-						"sectors":   parse(fields[5], "int"),
-						"total_ms":  parse(fields[6], "int"),
-					},
-					"writes": fieldMap{
-						"completed": parse(fields[7], "int"),
-						"merged":    parse(fields[8], "int"),
-						"sectors":   parse(fields[9], "int"),
-						"total_ms":  parse(fields[10], "int"),
-					},
+				fm[partition] = FieldMap{
+					"reads_completed":       parse(fields[3], "int"),
+					"reads_merged":          parse(fields[4], "int"),
+					"reads_sectors":         parse(fields[5], "int"),
+					"reads_total_ms":        parse(fields[6], "int"),
+					"writes_completed":      parse(fields[7], "int"),
+					"writes_merged":         parse(fields[8], "int"),
+					"writes_sectors":        parse(fields[9], "int"),
+					"writes_total_ms":       parse(fields[10], "int"),
 					"ios_in_progress":       parse(fields[11], "int"),
 					"ios_total_ms":          parse(fields[11], "int"),
 					"ios_total_weighted_ms": parse(fields[12], "int"),
@@ -83,14 +81,14 @@ func GetDiskInfo() fieldMap {
 	})
 }
 
-func GetMemInfo() fieldMap {
-	return getFieldMap(readFile("/proc/meminfo"), func(fm fieldMap, fields []string) {
+func GetMemInfo() FieldMap {
+	return getFieldMap(readFile("/proc/meminfo"), func(fm FieldMap, fields []string) {
 		fm[strings.TrimRight(fields[0], ":")] = parse(fields[1], "int")
 	})
 }
 
-func GetUptime() fieldMap {
-	return getFieldMap(readFile("/proc/uptime"), func(fieldMap fieldMap, fields []string) {
+func GetUptime() FieldMap {
+	return getFieldMap(readFile("/proc/uptime"), func(fieldMap FieldMap, fields []string) {
 		fieldMap["total"] = parse(fields[0], "float")
 		fieldMap["idle"] = parse(fields[1], "float")
 	})
@@ -98,20 +96,47 @@ func GetUptime() fieldMap {
 
 // Private functions
 
-func readFile(filePath string) []byte {
+func getPids() []string {
+	pids := []string{}
+	procFiles, _ := ioutil.ReadDir("/proc/")
+	for _, procFile := range procFiles {
+		if pid := parse(procFile.Name(), "int"); pid != 0 {
+			pids = append(pids, procFile.Name())
+		}
+	}
+
+	return pids
+}
+
+func getProcessInfo(pid string) FieldMap {
+	fm := getFieldMap(readFile("/proc/"+pid+"/status"), func(fm FieldMap, fields []string) {
+		if len(fields) > 1 {
+			fm[strings.TrimRight(fields[0], ":")] = fields[1]
+		}
+	})
+
+	cmdLine := strings.FieldsFunc(readFile("/proc/"+pid+"/cmdline"), func(r rune) bool {
+		return !unicode.IsPrint(r)
+	})
+	fm["CmdLine"] = strings.Join(cmdLine, " ")
+
+	return fm
+}
+
+func readFile(filePath string) string {
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Printf("[error] Could not read file %s: %s", filePath, err)
-		return []byte{}
+		return ""
 	}
 
-	return contents
+	return string(contents)
 }
 
-func getFieldMap(b []byte, fn func(fieldMap fieldMap, fields []string)) fieldMap {
-	fieldMap := fieldMap{}
+func getFieldMap(s string, fn func(fm FieldMap, fields []string)) FieldMap {
+	fieldMap := FieldMap{}
 
-	for _, line := range bytes.Split(b, []byte("\n")) {
+	for _, line := range strings.Split(s, "\n") {
 		if len(line) > 0 {
 			fn(fieldMap, strings.Fields(string(line)))
 		}
@@ -125,7 +150,7 @@ func parse(s, cType string) interface{} {
 		result, _ := strconv.Atoi(s)
 		return result
 	case "float":
-		result, _ := strconv.ParseFloat(string(s), 64)
+		result, _ := strconv.ParseFloat(s, 64)
 		return result
 	}
 
