@@ -13,8 +13,8 @@ without notice.
 
 ## Todo
 
-* [ ] Add Tests
-* [ ] HTTP authentication for security
-* [ ] Standardize and document API
-* [ ] Add more in-depth networking and disk stats
-* [ ] Plugin engine
+* Write tests
+* HTTP authentication for security
+* Standardize and document API
+* More in-depth networking and disk stats
+* Plugin engine for reading, parsing, and presenting data
