@@ -57,12 +57,16 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	resp["memory"] = j{
 		"simple": j{
-			"total":       mem["MemTotal"],
-			"free":        mem["MemFree"],
-			"buffers":     mem["Buffers"],
-			"cached":      mem["Cached"],
-			"swap_cached": mem["SwapCached"],
-			"free_total":  mem["MemFree"].(int) + mem["Buffers"].(int) + mem["Cached"].(int),
+			"total":   mem["MemTotal"],
+			"free":    mem["MemFree"],
+			"buffers": mem["Buffers"],
+			"cached":  mem["Cached"],
+			"swap": j{
+				"cached": mem["SwapCached"],
+				"total":  mem["SwapTotal"],
+				"free":   mem["SwapFree"],
+			},
+			"free_total": mem["MemFree"].(int) + mem["Buffers"].(int) + mem["Cached"].(int),
 		},
 		"active":        mem["Active"],
 		"inactive":      mem["Inactive"],
@@ -72,10 +76,6 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"inactive_file": mem["Inactive(file)"],
 		"unevictable":   mem["Unevictable"],
 		"mlocked":       mem["Mlocked"],
-		"swap": j{
-			"total": mem["SwapTotal"],
-			"free":  mem["SwapFree"],
-		},
 		"dirty":         mem["Dirty"],
 		"writeback":     mem["Writeback"],
 		"anon_pages":    mem["AnonPages"],
