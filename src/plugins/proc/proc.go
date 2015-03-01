@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type fieldMap map[string]interface{}
@@ -14,25 +15,84 @@ func GetLoadAvg() fieldMap {
 	return getFieldMap(readFile("/proc/loadavg"), func(fieldMap fieldMap, fields []string) {
 		processes := strings.Split(fields[3], "/")
 
-		fieldMap["1m"] = conv(fields[0], "float")
-		fieldMap["5m"] = conv(fields[1], "float")
-		fieldMap["15m"] = conv(fields[2], "float")
-		fieldMap["prunning"] = conv(processes[0], "int")
-		fieldMap["ptotal"] = conv(processes[1], "int")
-		fieldMap["lastpid"] = conv(fields[4], "int")
+		fieldMap["1m"] = parse(fields[0], "float")
+		fieldMap["5m"] = parse(fields[1], "float")
+		fieldMap["15m"] = parse(fields[2], "float")
+		fieldMap["prunning"] = parse(processes[0], "int")
+		fieldMap["ptotal"] = parse(processes[1], "int")
+		fieldMap["lastpid"] = parse(fields[4], "int")
+	})
+}
+
+func GetProcessesInfo() fieldMap {
+	fm := fieldMap{}
+
+	procFiles, _ := ioutil.ReadDir("/proc/")
+	for _, procFile := range procFiles {
+		if pid := parse(procFile.Name(), "int"); pid != 0 {
+			cmdLine := string(readFile("/proc/" + procFile.Name() + "/cmdline"))
+			strippedCmdLine := strings.FieldsFunc(cmdLine, func(r rune) bool {
+				return !unicode.IsPrint(r)
+			})
+			status := getFieldMap(readFile("/proc/"+procFile.Name()+"/status"), func(fm fieldMap, fields []string) {
+				if len(fields) > 1 {
+					fm[strings.TrimRight(fields[0], ":")] = fields[1]
+				}
+			})
+			fm[procFile.Name()] = fieldMap{
+				"cmdline": strings.Join(strippedCmdLine, " "),
+				"status":  status,
+			}
+		}
+	}
+
+	return fm
+}
+
+func GetDiskInfo() fieldMap {
+	var partitions []string
+
+	getFieldMap(readFile("/proc/partitions"), func(fm fieldMap, fields []string) {
+		if fields[0] != "major" {
+			partitions = append(partitions, fields[3])
+		}
+	})
+
+	return getFieldMap(readFile("/proc/diskstats"), func(fm fieldMap, fields []string) {
+		for _, partition := range partitions {
+			if fields[2] == partition {
+				fm[partition] = fieldMap{
+					"reads": fieldMap{
+						"completed": parse(fields[3], "int"),
+						"merged":    parse(fields[4], "int"),
+						"sectors":   parse(fields[5], "int"),
+						"total_ms":  parse(fields[6], "int"),
+					},
+					"writes": fieldMap{
+						"completed": parse(fields[7], "int"),
+						"merged":    parse(fields[8], "int"),
+						"sectors":   parse(fields[9], "int"),
+						"total_ms":  parse(fields[10], "int"),
+					},
+					"ios_in_progress":       parse(fields[11], "int"),
+					"ios_total_ms":          parse(fields[11], "int"),
+					"ios_total_weighted_ms": parse(fields[12], "int"),
+				}
+			}
+		}
 	})
 }
 
 func GetMemInfo() fieldMap {
-	return getFieldMap(readFile("/proc/meminfo"), func(fieldMap fieldMap, fields []string) {
-		fieldMap[strings.TrimRight(fields[0], ":")] = conv(fields[1], "int")
+	return getFieldMap(readFile("/proc/meminfo"), func(fm fieldMap, fields []string) {
+		fm[strings.TrimRight(fields[0], ":")] = parse(fields[1], "int")
 	})
 }
 
 func GetUptime() fieldMap {
 	return getFieldMap(readFile("/proc/uptime"), func(fieldMap fieldMap, fields []string) {
-		fieldMap["total"] = conv(fields[0], "float")
-		fieldMap["idle"] = conv(fields[1], "float")
+		fieldMap["total"] = parse(fields[0], "float")
+		fieldMap["idle"] = parse(fields[1], "float")
 	})
 }
 
@@ -59,7 +119,7 @@ func getFieldMap(b []byte, fn func(fieldMap fieldMap, fields []string)) fieldMap
 	return fieldMap
 }
 
-func conv(s, cType string) interface{} {
+func parse(s, cType string) interface{} {
 	switch cType {
 	case "int":
 		result, _ := strconv.Atoi(s)

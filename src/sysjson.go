@@ -25,6 +25,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	load := proc.GetLoadAvg()
 	mem := proc.GetMemInfo()
 	uptime := proc.GetUptime()
+	disk := proc.GetDiskInfo()
+	processes := proc.GetProcessesInfo()
 
 	resp := map[string]interface{}{}
 	resp["uptime"] = map[string]interface{}{
@@ -37,6 +39,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"15m": load["15m"],
 	}
 	resp["processes"] = map[string]interface{}{
+		"pids":     processes,
 		"running":  load["prunning"],
 		"sleeping": load["ptotal"].(int) - load["prunning"].(int),
 		"total":    load["ptotal"],
@@ -96,8 +99,12 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 			"1G": mem["DirectMap1G"],
 		},
 	}
+	resp["disk"] = disk
 
-	respJSON, _ := json.Marshal(resp)
+	respJSON, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatal("[error] Fatal! Could not construct JSON response: %s", err)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(respJSON)
