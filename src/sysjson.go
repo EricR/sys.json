@@ -29,6 +29,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	uptime := proc.GetUptime()
 	disk := proc.GetDiskInfo()
 	processTree := proc.GetProcessesTree()
+	network := proc.GetNetworkInfo()
 
 	resp := j{}
 	resp["uptime"] = j{
@@ -126,6 +127,22 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 				"current":           val["ios_in_progress"],
 				"total_ms":          val["ios_total_ms"],
 				"weighted_total_ms": val["ios_total_weighted_ms"],
+			},
+		}
+	})
+	resp["network"] = network.Map(func(fm proc.FieldMap, key string, val proc.FieldMap) {
+		fm[key] = j{
+			"receive": j{
+				"bytes":   val["receive_bytes"],
+				"packets": val["receive_packets"],
+				"errors":  val["receive_errors"],
+				"dropped": val["receive_drops"],
+			},
+			"transmit": j{
+				"bytes":   val["transmit_bytes"],
+				"packets": val["transmit_packets"],
+				"errors":  val["transmit_errors"],
+				"dropped": val["transmit_drops"],
 			},
 		}
 	})

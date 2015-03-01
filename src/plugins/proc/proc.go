@@ -51,6 +51,31 @@ func GetProcessesTree() FieldMap {
 	return fm
 }
 
+func GetNetworkInfo() FieldMap {
+	return getFieldMap(readFile("/proc/net/dev"), func(fm FieldMap, fields []string) {
+		if !strings.Contains(fields[0], "|") && !strings.Contains(fields[1], "|") {
+			if strings.Contains(fields[0], ":") {
+				split := strings.Split(fields[0], ":")
+				fields = append(split, fields[1:]...)
+			}
+			if fields[1] == "" {
+				fields = append([]string{fields[0]}, fields[2:]...)
+			}
+
+			fm[strings.TrimRight(fields[0], ":")] = FieldMap{
+				"receive_bytes":    parse(fields[1], "int"),
+				"receive_packets":  parse(fields[2], "int"),
+				"receive_errors":   parse(fields[3], "int"),
+				"receive_drops":    parse(fields[4], "int"),
+				"transmit_bytes":   parse(fields[9], "int"),
+				"transmit_packets": parse(fields[10], "int"),
+				"transmit_errors":  parse(fields[11], "int"),
+				"transmit_drops":   parse(fields[12], "int"),
+			}
+		}
+	})
+}
+
 func GetDiskInfo() FieldMap {
 	var partitions []string
 
