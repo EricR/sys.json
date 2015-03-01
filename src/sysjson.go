@@ -2,14 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"github.com/ericr/sysjson/src/plugins/proc"
+	"log"
 	"net/http"
 )
 
+var (
+	listen = flag.String("listen", ":5374", "Address to listen on.")
+)
+
 func main() {
+	flag.Parse()
+	log.Printf("[notice] sys.json listening on %s", *listen)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", statsHandler)
-	http.ListenAndServe(":3000", mux)
+	http.ListenAndServe(*listen, mux)
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
