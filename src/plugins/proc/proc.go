@@ -24,7 +24,7 @@ func GetLoadAvg() fieldMap {
 	})
 }
 
-func GetProcessesInfo() fieldMap {
+func GetProcessesTree() fieldMap {
 	fm := fieldMap{}
 
 	procFiles, _ := ioutil.ReadDir("/proc/")

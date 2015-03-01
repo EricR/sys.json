@@ -26,7 +26,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	mem := proc.GetMemInfo()
 	uptime := proc.GetUptime()
 	disk := proc.GetDiskInfo()
-	processes := proc.GetProcessesInfo()
+	processTree := proc.GetProcessesTree()
 
 	resp := map[string]interface{}{}
 	resp["uptime"] = map[string]interface{}{
@@ -39,7 +39,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"15m": load["15m"],
 	}
 	resp["processes"] = map[string]interface{}{
-		"pids":     processes,
+		"tree":     processTree,
 		"running":  load["prunning"],
 		"sleeping": load["ptotal"].(int) - load["prunning"].(int),
 		"total":    load["ptotal"],
