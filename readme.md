@@ -16,5 +16,6 @@ without notice.
 * Write tests
 * HTTP authentication for security
 * Standardize and document API
+* Allow filtering so you only get back what you're interested in
 * More in-depth networking and disk stats
 * Plugin engine for reading, parsing, and presenting data
