@@ -31,7 +31,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"total": uptime["total"],
 		"idle":  uptime["idle"],
 	}
-	resp["load_avgs"] = map[string]interface{}{
+	resp["load_avg"] = map[string]interface{}{
 		"1m":  load["1m"],
 		"5m":  load["5m"],
 		"15m": load["15m"],
@@ -42,7 +42,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		"total":    load["ptotal"],
 		"last_pid": load["lastpid"],
 	}
-	resp["mem"] = map[string]interface{}{
+	resp["memory"] = map[string]interface{}{
 		"simple": map[string]interface{}{
 			"total":       mem["MemTotal"],
 			"free":        mem["MemFree"],
