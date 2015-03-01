@@ -96,9 +96,13 @@ without notice.
       "buffers":77664,
       "cached":326080,
       "free":495200,
-      "free_total":898944,
-      "swap_cached":0,
       "total":1020400
+      "swap":{
+        "free":0,
+        "total":0,
+        "cached":0
+      },
+      "free_total":898944
     },
     "slab":53996,
     "swap":{
