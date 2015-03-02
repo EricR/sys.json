@@ -42,9 +42,13 @@ func GetProcessTree() FieldMap {
 			"name":    info["Name"],
 			"cmdline": info["CmdLine"],
 			"state":   info["State"],
-			"pid":     parse(info["Pid"].(string), "int"),
-			"ppid":    parse(info["PPid"].(string), "int"),
-			"threads": parse(info["Threads"].(string), "int"),
+			"pid":     parse(info["Pid"], "int"),
+			"ppid":    parse(info["PPid"], "int"),
+			"threads": parse(info["Threads"], "int"),
+			"vm_size": parse(info["VmSize"], "int"),
+			"vm_peak": parse(info["VmPeak"], "int"),
+			"vm_rss":  parse(info["VmRSS"], "int"),
+			"vm_hwm":  parse(info["VmHWM"], "int"),
 		}
 	}
 
@@ -169,15 +173,19 @@ func getFieldMap(s string, fn func(fm FieldMap, fields []string)) FieldMap {
 	return fieldMap
 }
 
-func parse(s, cType string) interface{} {
+func parse(s interface{}, cType string) interface{} {
+	if s == nil {
+		return nil
+	}
+
 	switch cType {
 	case "int":
-		result, _ := strconv.Atoi(s)
+		result, _ := strconv.Atoi(s.(string))
 		return result
 	case "float":
-		result, _ := strconv.ParseFloat(s, 64)
+		result, _ := strconv.ParseFloat(s.(string), 64)
 		return result
 	}
 
-	return string(s)
+	return s.(string)
 }

@@ -51,6 +51,16 @@ var (
 						"pid":          val["pid"],
 						"ppid":         val["ppid"],
 						"thread_count": val["threads"],
+						"mem": j{
+							"virtual": j{
+								"current": val["vm_size"],
+								"peak":    val["vm_peak"],
+							},
+							"resident": j{
+								"current": val["vm_rss"],
+								"peak":    val["vm_hwm"],
+							},
+						},
 					}
 				})
 			},
