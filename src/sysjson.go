@@ -20,7 +20,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", statsHandler)
-	http.ListenAndServe(*listen, mux)
+	log.Fatal(http.ListenAndServe(*listen, mux))
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
