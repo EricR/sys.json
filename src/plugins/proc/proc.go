@@ -32,7 +32,7 @@ func GetLoadAvg() FieldMap {
 	})
 }
 
-func GetProcessesTree() FieldMap {
+func GetProcessTree() FieldMap {
 	fm := FieldMap{}
 	pids := getPids()
 
