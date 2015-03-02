@@ -3,7 +3,7 @@
 Exposes system stats as a JSON API.
 
 It works, but it's a work in progress. Things are subject to change without notice, so please use
-caution if you use this in production. Assume there are bugs.
+caution if you use decide to use this in production. Assume there are bugs.
 
 ## Why?
 
@@ -86,6 +86,5 @@ curl http://localhost:5374/?modules=disk,load
 * Write tests
 * HTTP authentication for security
 * Standardize and document API
-* Allow filtering so you only get back what you're interested in
 * More in-depth networking and disk stats
 * Plugin engine for reading, parsing, and presenting data
