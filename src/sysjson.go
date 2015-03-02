@@ -10,6 +10,9 @@ import (
 
 var (
 	listen = flag.String("listen", ":5374", "Address to listen on.")
+	tls = flag.Bool("tls", false, "Use TLS (requires -cert and -key)")
+        cert = flag.String("cert", "", "TLS cert file")
+        key = flag.String("key", "", "TLS key file")
 )
 
 type j map[string]interface{}
@@ -20,7 +23,12 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", statsHandler)
-	log.Fatal(http.ListenAndServe(*listen, mux))
+	if *tls {
+                log.Printf("[notice] Using TLS")
+                log.Fatal(http.ListenAndServeTLS(*listen, *cert, *key, mux))
+        } else {
+                log.Fatal(http.ListenAndServe(*listen, mux))
+        }
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
