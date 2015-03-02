@@ -18,10 +18,11 @@ var (
 	key    = flag.String("key", "", "TLS key file")
 
 	// Define basic modules
-	modules = map[string]interface{}{
-		"load": j{
-			"desc": "Provides load averages",
-			"func": func() j {
+	modules = map[string]module{
+		"load": module{
+			Name: "load",
+			Desc: "Provides load averages",
+			Func: func() j {
 				load := proc.GetLoadAvg()
 				return j{
 					"1m":  load["1m"],
@@ -30,9 +31,10 @@ var (
 				}
 			},
 		},
-		"uptime": j{
-			"desc": "Provides uptime",
-			"func": func() j {
+		"uptime": module{
+			Name: "uptime",
+			Desc: "Provides uptime",
+			Func: func() j {
 				uptime := proc.GetUptime()
 				return j{
 					"total": uptime["total"],
@@ -40,9 +42,10 @@ var (
 				}
 			},
 		},
-		"process": j{
-			"desc": "Provides a process tree",
-			"func": func() j {
+		"process": module{
+			Name: "process",
+			Desc: "Provides a process tree",
+			Func: func() j {
 				return proc.GetProcessTree().Map(func(fm proc.FieldMap, key string, val proc.FieldMap) {
 					fm[key] = j{
 						"name":         val["name"],
@@ -55,9 +58,10 @@ var (
 				})
 			},
 		},
-		"mem": j{
-			"desc": "Provides memory stats",
-			"func": func() j {
+		"mem": module{
+			Name: "mem",
+			Desc: "Provides memory stats",
+			Func: func() j {
 				mem := proc.GetMemInfo()
 				return j{
 					"simple": j{
@@ -115,9 +119,10 @@ var (
 				}
 			},
 		},
-		"disk": j{
-			"desc": "Provides stats on each disk",
-			"func": func() j {
+		"disk": module{
+			Name: "disk",
+			Desc: "Provides stats on each disk",
+			Func: func() j {
 				disk := proc.GetDiskInfo()
 				return disk.Map(func(fm proc.FieldMap, key string, val proc.FieldMap) {
 					fm[key] = j{
@@ -142,9 +147,10 @@ var (
 				})
 			},
 		},
-		"net": j{
-			"desc": "Provides stats on each network interface",
-			"func": func() j {
+		"net": module{
+			Name: "net",
+			Desc: "Provides stats on each network interface",
+			Func: func() j {
 				net := proc.GetNetworkInfo()
 				return net.Map(func(fm proc.FieldMap, key string, val proc.FieldMap) {
 					fm[key] = j{
@@ -166,6 +172,12 @@ var (
 		},
 	}
 )
+
+type module struct {
+	Name string
+	Desc string
+	Func func() j
+}
 
 type j map[string]interface{}
 
@@ -221,11 +233,12 @@ func loadModules(resp j, paramModules string) j {
 		resp["modules_available"] = modulesAvailable
 	}
 
-	for _, module := range modulesSelected {
-		if modules[module] != nil {
-			resp[module] = modules[module].(j)["func"].(func() j)()
+	for _, m := range modulesSelected {
+		module := modules[m]
+		if module.Name != "" {
+			resp[m] = module.Func()
 		} else {
-			log.Printf("[warn] Module '%s' not found", module)
+			log.Printf("[warn] Module '%s' not found", m)
 		}
 	}
 
