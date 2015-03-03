@@ -65,7 +65,7 @@ func BasicAuth(pass http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if len(r.Header.Get("Authorization")) <= 0 {
-			http.Error(w, "authorization is required", http.StatusUnauthorized)
+			http.Error(w, "authentication is required", http.StatusUnauthorized)
 			return
 		}
 
