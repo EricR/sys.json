@@ -71,15 +71,20 @@ func BasicAuth(pass http.HandlerFunc) http.HandlerFunc {
 
 		auth := strings.SplitN(r.Header["Authorization"][0], " ", 2)
 
-		if len(auth) != 2 || auth[0] != "Basic" {
+		if auth[0] != "Basic" || len(auth) != 2 {
 			http.Error(w, "bad syntax", http.StatusBadRequest)
 			return
 		}
 
 		payload, _ := base64.StdEncoding.DecodeString(auth[1])
-		pair := strings.SplitN(string(payload), ":", 2)
+		parsed := string(payload)
 
-		if !Validate(pair[1]) {
+		if strings.Contains(parsed, ":") {
+			pair := strings.SplitN(string(payload), ":", 2)
+			parsed = pair[1]
+		}
+
+		if !Validate(parsed) {
 			http.Error(w, "authorization failed", http.StatusUnauthorized)
 			return
 		}
