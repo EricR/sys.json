@@ -85,7 +85,7 @@ func BasicAuth(pass http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !Validate(parsed) {
-			http.Error(w, "authorization failed", http.StatusUnauthorized)
+			http.Error(w, "authentication failed", http.StatusUnauthorized)
 			return
 		}
 
