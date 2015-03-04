@@ -20,10 +20,10 @@ type DiskStatsForIO struct {
 }
 
 type DiskStatsForOp struct {
-	Completed int `json: "completed"`
-	Sectors   int `json: "sectors"`
-	Merged    int `json: "merged"`
-	TotalMs   int `json: "total_ms"`
+	Completed int `json:"completed"`
+	Sectors   int `json:"sectors"`
+	Merged    int `json:"merged"`
+	TotalMs   int `json:"total_ms"`
 }
 
 type NetworkStats struct {
