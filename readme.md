@@ -84,7 +84,6 @@ curl http://localhost:5374/?modules=disk,load
 ## Todo
 
 * Write tests
-* HTTP authentication for security
 * Standardize and document API
 * More in-depth networking and disk stats
 * Plugin engine for reading, parsing, and presenting data
