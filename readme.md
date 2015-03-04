@@ -20,7 +20,50 @@ What you do with that data is up to you.
 ./sysjson --listen 0.0.0.0:5374
 ```
 
-## Example Response
+## Example Requests
+
+```bash
+curl http://localhost:5374/
+```
+
+```js
+{
+  "modules_available": {
+    "conntrack": {
+      "name": "conntrack",
+      "description": "Provides stats on current network connections (requires conntrack-tools)"
+    },
+    "disk": {
+      "name": "disk",
+      "description": "Provides stats on each disk"
+    },
+    "host": {
+      "name": "host",
+      "description": "Provides basic host info"
+    },
+    "load": {
+      "name": "load",
+      "description": "Provides load averages"
+    },
+    "mem": {
+      "name": "mem",
+      "description": "Provides system-wide memory stats"
+    },
+    "net": {
+      "name": "net",
+      "description": "Provides stats on each network interface"
+    },
+    "process": {
+      "name": "process",
+      "description": "Provides a process tree"
+    },
+    "uptime": {
+      "name": "uptime",
+      "description": "Provides time since startup"
+    }
+  }
+}
+```
 
 ```bash
 curl http://localhost:5374/?modules=disk,load
@@ -28,55 +71,50 @@ curl http://localhost:5374/?modules=disk,load
 
 ```js
 {
-  "hostname":"eric.localhost",
-  "current_time":{
-    "string":"2015-03-01T23:45:45.286141452-05:00",
-    "unix":1425271545
-  },
-  "disk":{
-    "vda":{
-      "io_ops":{
-        "current":0,
-        "total_ms":0,
-        "weighted_total_ms":34522
+  "disk": {
+    "vda": {
+      "reads": {
+        "Completed": 21955,
+        "Sectors": 1258186,
+        "Merged": 11170,
+        "TotalMs": 8302
       },
-      "reads":{
-        "completed":9347,
-        "merged":4151,
-        "sectors":617802,
-        "total_ms":2849
+      "writes": {
+        "Completed": 170359,
+        "Sectors": 8927472,
+        "Merged": 940398,
+        "TotalMs": 893929
       },
-      "writes":{
-        "completed":53196,
-        "merged":233210,
-        "sectors":2292064,
-        "total_ms":134061
+      "io": {
+        "in_progress": 0,
+        "total_ms": 0,
+        "total_weighted": 97388
       }
     },
-    "vda1":{
-      "io_ops":{
-        "current":0,
-        "total_ms":0,
-        "weighted_total_ms":34516
+    "vda1": {
+      "reads": {
+        "Completed": 21781,
+        "Sectors": 1256794,
+        "Merged": 11170,
+        "TotalMs": 8295
       },
-      "reads":{
-        "completed":9173,
-        "merged":4151,
-        "sectors":616410,
-        "total_ms":2842
+      "writes": {
+        "Completed": 170359,
+        "Sectors": 8927472,
+        "Merged": 940398,
+        "TotalMs": 893929
       },
-      "writes":{
-        "completed":53196,
-        "merged":233210,
-        "sectors":2292064,
-        "total_ms":134061
+      "io": {
+        "in_progress": 0,
+        "total_ms": 0,
+        "total_weighted": 97382
       }
     }
   },
-  "load":{
-    "15m":0,
-    "1m":0.02,
-    "5m":0.04
+  "load": {
+    "15m": 0,
+    "1m": 0,
+    "5m": 0.02
   }
 }
 ```
