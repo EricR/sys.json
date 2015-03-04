@@ -1,62 +1,109 @@
 package proc
 
 import (
+	"github.com/ericr/sysjson/src/util"
 	"io/ioutil"
-	"log"
-	"strconv"
 	"strings"
 	"unicode"
 )
 
-type FieldMap map[string]interface{}
-
-func (fm FieldMap) Map(fn func(collector FieldMap, key string, value FieldMap)) map[string]interface{} {
-	collector := map[string]interface{}{}
-
-	for k, v := range fm {
-		fn(collector, k, v.(FieldMap))
-	}
-
-	return collector
+type DiskStats struct {
+	Reads  DiskStatsForOp `json:"reads"`
+	Writes DiskStatsForOp `json:"writes"`
+	IO     DiskStatsForIO `json:"io"`
 }
 
-func GetLoadAvg() FieldMap {
-	return getFieldMap(readFile("/proc/loadavg"), func(fm FieldMap, fields []string) {
-		processes := strings.Split(fields[3], "/")
+type DiskStatsForIO struct {
+	InProgress      int `json:"in_progress"`
+	TotalMs         int `json:"total_ms"`
+	TotalWeightedMs int `json:"total_weighted"ms"`
+}
 
-		fm["1m"] = parse(fields[0], "float")
-		fm["5m"] = parse(fields[1], "float")
-		fm["15m"] = parse(fields[2], "float")
-		fm["prunning"] = parse(processes[0], "int")
-		fm["lastpid"] = parse(fields[4], "int")
+type DiskStatsForOp struct {
+	Completed int `json: "completed"`
+	Sectors   int `json: "sectors"`
+	Merged    int `json: "merged"`
+	TotalMs   int `json: "total_ms"`
+}
+
+type NetworkStats struct {
+	Receieve NetworkStatsSide `json:"receieve"`
+	Send     NetworkStatsSide `json:"send"`
+}
+
+type NetworkStatsSide struct {
+	Bytes   int `json:"bytes"`
+	Packets int `json:"packets"`
+	Errors  int `json:"errors"`
+	Dropped int `json:"dropped"`
+}
+
+type Process struct {
+	Name        string        `json:"name"`
+	CmdLine     string        `json:"cmdline"`
+	State       string        `json:"state"`
+	PID         int           `json:"pid"`
+	PPID        int           `json:"ppid"`
+	ThreadCount int           `json:"thread_count"`
+	Memory      ProcessMemory `json:"memory"`
+}
+
+type ProcessMemory struct {
+	Virtual  ProcessMemoryForType `json:"virtual"`
+	Resident ProcessMemoryForType `json:"resident"`
+}
+
+type ProcessMemoryForType struct {
+	Current int `json: "current"`
+	Peak    int `json:"peak"`
+}
+
+func GetLoadAvg() map[string]interface{} {
+	stats := map[string]interface{}{}
+
+	util.EachLine("/proc/loadavg", func(fields []string) {
+		stats["1m"] = util.ParseFloat(fields[0])
+		stats["5m"] = util.ParseFloat(fields[1])
+		stats["15m"] = util.ParseFloat(fields[2])
 	})
+
+	return stats
 }
 
-func GetProcessTree() FieldMap {
-	fm := FieldMap{}
+func GetProcessTree() map[string]interface{} {
+	tree := map[string]interface{}{}
 	pids := getPids()
 
 	for _, pid := range pids {
-		info := getProcessInfo(string(pid))
-		fm[string(pid)] = FieldMap{
-			"name":    info["Name"],
-			"cmdline": info["CmdLine"],
-			"state":   info["State"],
-			"pid":     parse(info["Pid"], "int"),
-			"ppid":    parse(info["PPid"], "int"),
-			"threads": parse(info["Threads"], "int"),
-			"vm_size": parse(info["VmSize"], "int"),
-			"vm_peak": parse(info["VmPeak"], "int"),
-			"vm_rss":  parse(info["VmRSS"], "int"),
-			"vm_hwm":  parse(info["VmHWM"], "int"),
+		pids := string(pid)
+		info := getProcessInfo(pids)
+		tree[pids] = Process{
+			Name:        info["Name"],
+			CmdLine:     info["CmdLine"],
+			State:       info["State"],
+			PID:         util.ParseInt(info["Pid"]),
+			PPID:        util.ParseInt(info["PPid"]),
+			ThreadCount: util.ParseInt(info["Threads"]),
+			Memory: ProcessMemory{
+				Virtual: ProcessMemoryForType{
+					Current: util.ParseInt(info["VmSize"]),
+					Peak:    util.ParseInt(info["VmPeak"]),
+				},
+				Resident: ProcessMemoryForType{
+					Current: util.ParseInt(info["VmRSS"]),
+					Peak:    util.ParseInt(info["VmHWM"]),
+				},
+			},
 		}
 	}
 
-	return fm
+	return tree
 }
 
-func GetNetworkInfo() FieldMap {
-	return getFieldMap(readFile("/proc/net/dev"), func(fm FieldMap, fields []string) {
+func GetNetworkInfo() map[string]interface{} {
+	stats := map[string]interface{}{}
+
+	util.EachLine("/proc/net/dev", func(fields []string) {
 		if !strings.Contains(fields[0], "|") && !strings.Contains(fields[1], "|") {
 			if strings.Contains(fields[0], ":") {
 				split := strings.Split(fields[0], ":")
@@ -66,70 +113,145 @@ func GetNetworkInfo() FieldMap {
 				fields = append([]string{fields[0]}, fields[2:]...)
 			}
 
-			fm[strings.TrimRight(fields[0], ":")] = FieldMap{
-				"receive_bytes":    parse(fields[1], "int"),
-				"receive_packets":  parse(fields[2], "int"),
-				"receive_errors":   parse(fields[3], "int"),
-				"receive_drops":    parse(fields[4], "int"),
-				"transmit_bytes":   parse(fields[9], "int"),
-				"transmit_packets": parse(fields[10], "int"),
-				"transmit_errors":  parse(fields[11], "int"),
-				"transmit_drops":   parse(fields[12], "int"),
+			stats[strings.TrimRight(fields[0], ":")] = NetworkStats{
+				Receieve: NetworkStatsSide{
+					Bytes:   util.ParseInt(fields[1]),
+					Packets: util.ParseInt(fields[2]),
+					Errors:  util.ParseInt(fields[3]),
+					Dropped: util.ParseInt(fields[4]),
+				},
+				Send: NetworkStatsSide{
+					Bytes:   util.ParseInt(fields[9]),
+					Packets: util.ParseInt(fields[10]),
+					Errors:  util.ParseInt(fields[11]),
+					Dropped: util.ParseInt(fields[12]),
+				},
 			}
 		}
 	})
+
+	return stats
 }
 
-func GetDiskInfo() FieldMap {
-	var partitions []string
+func GetDiskInfo() map[string]interface{} {
+	stats := map[string]interface{}{}
+	partitions := []string{}
 
-	getFieldMap(readFile("/proc/partitions"), func(fm FieldMap, fields []string) {
+	util.EachLine("/proc/partitions", func(fields []string) {
 		if fields[0] != "major" {
 			partitions = append(partitions, fields[3])
 		}
 	})
 
-	return getFieldMap(readFile("/proc/diskstats"), func(fm FieldMap, fields []string) {
+	util.EachLine("/proc/diskstats", func(fields []string) {
 		for _, partition := range partitions {
 			if fields[2] == partition {
-				fm[partition] = FieldMap{
-					"reads_completed":       parse(fields[3], "int"),
-					"reads_merged":          parse(fields[4], "int"),
-					"reads_sectors":         parse(fields[5], "int"),
-					"reads_total_ms":        parse(fields[6], "int"),
-					"writes_completed":      parse(fields[7], "int"),
-					"writes_merged":         parse(fields[8], "int"),
-					"writes_sectors":        parse(fields[9], "int"),
-					"writes_total_ms":       parse(fields[10], "int"),
-					"ios_in_progress":       parse(fields[11], "int"),
-					"ios_total_ms":          parse(fields[11], "int"),
-					"ios_total_weighted_ms": parse(fields[12], "int"),
+				stats[partition] = DiskStats{
+					Reads: DiskStatsForOp{
+						Completed: util.ParseInt(fields[3]),
+						Merged:    util.ParseInt(fields[4]),
+						Sectors:   util.ParseInt(fields[5]),
+						TotalMs:   util.ParseInt(fields[6]),
+					},
+					Writes: DiskStatsForOp{
+						Completed: util.ParseInt(fields[7]),
+						Merged:    util.ParseInt(fields[8]),
+						Sectors:   util.ParseInt(fields[9]),
+						TotalMs:   util.ParseInt(fields[10]),
+					},
+					IO: DiskStatsForIO{
+						InProgress:      util.ParseInt(fields[11]),
+						TotalMs:         util.ParseInt(fields[11]),
+						TotalWeightedMs: util.ParseInt(fields[12]),
+					},
 				}
 			}
 		}
 	})
+
+	return stats
 }
 
-func GetMemInfo() FieldMap {
-	return getFieldMap(readFile("/proc/meminfo"), func(fm FieldMap, fields []string) {
-		fm[strings.TrimRight(fields[0], ":")] = parse(fields[1], "int")
+func GetMemoryInfo() map[string]interface{} {
+	mem := map[string]int{}
+
+	util.EachLine("/proc/meminfo", func(fields []string) {
+		mem[strings.TrimRight(fields[0], ":")] = util.ParseInt(fields[1])
 	})
+
+	return map[string]interface{}{
+		"simple": map[string]interface{}{
+			"total":   mem["MemTotal"],
+			"free":    mem["MemFree"],
+			"buffers": mem["Buffers"],
+			"cached":  mem["Cached"],
+			"swap": map[string]int{
+				"cached": mem["SwapCached"],
+				"total":  mem["SwapTotal"],
+				"free":   mem["SwapFree"],
+			},
+			"free_total": mem["MemFree"] + mem["Buffers"] + mem["Cached"],
+		},
+		"active":        mem["Active"],
+		"inactive":      mem["Inactive"],
+		"active_anon":   mem["Active(anon)"],
+		"inactive_anon": mem["Inactive(anon)"],
+		"active_file":   mem["Active(file)"],
+		"inactive_file": mem["Inactive(file)"],
+		"unevictable":   mem["Unevictable"],
+		"mlocked":       mem["Mlocked"],
+		"dirty":         mem["Dirty"],
+		"writeback":     mem["Writeback"],
+		"anon_pages":    mem["AnonPages"],
+		"mapped":        mem["Mapped"],
+		"shmem":         mem["Shmem"],
+		"slab":          mem["Slab"],
+		"s_reclaimable": mem["SReclaimable"],
+		"s_unreclaim":   mem["SUnreclaim"],
+		"kernel_stack":  mem["KernelStack"],
+		"nfs_unstable":  mem["NFS_Unstable"],
+		"bounce":        mem["Bounce"],
+		"writeback_tmp": mem["WritebackTmp"],
+		"commit_limit":  mem["CommitLimit"],
+		"commited_as":   mem["Committed_AS"],
+		"vmalloc": map[string]interface{}{
+			"total": mem["VmallocTotal"],
+			"used":  mem["VmallocUsed"],
+			"chunk": mem["VmallocChunk"],
+		},
+		"anon_huge_pages": mem["AnonHugePages"],
+		"huge_pages": map[string]interface{}{
+			"total": mem["HugePages_Total"],
+			"free":  mem["HugePages_Free"],
+			"rsvd":  mem["HugePages_Rsvd"],
+			"surp":  mem["HugePages_Surp"],
+		},
+		"huge_page_size": mem["Hugepagesize"],
+		"direct_map": map[string]interface{}{
+			"4k": mem["DirectMap4k"],
+			"2M": mem["DirectMap2M"],
+			"1G": mem["DirectMap1G"],
+		},
+	}
 }
 
-func GetUptime() FieldMap {
-	return getFieldMap(readFile("/proc/uptime"), func(fieldMap FieldMap, fields []string) {
-		fieldMap["total"] = parse(fields[0], "float")
-		fieldMap["idle"] = parse(fields[1], "float")
+func GetUptime() map[string]interface{} {
+	stats := map[string]interface{}{}
+
+	util.EachLine("/proc/uptime", func(fields []string) {
+		stats["total"] = util.ParseFloat(fields[0])
+		stats["idle"] = util.ParseFloat(fields[1])
 	})
-}
 
-// Private functions
+	return stats
+}
 
 func getPids() []string {
 	pids := []string{}
 	procFiles, _ := ioutil.ReadDir("/proc/")
+
 	for _, procFile := range procFiles {
-		if pid := parse(procFile.Name(), "int"); pid != 0 {
+		if pid := util.ParseInt(procFile.Name()); pid != 0 {
 			pids = append(pids, procFile.Name())
 		}
 	}
@@ -137,55 +259,17 @@ func getPids() []string {
 	return pids
 }
 
-func getProcessInfo(pid string) FieldMap {
-	fm := getFieldMap(readFile("/proc/"+pid+"/status"), func(fm FieldMap, fields []string) {
-		if len(fields) > 1 {
-			fm[strings.TrimRight(fields[0], ":")] = fields[1]
-		}
+func getProcessInfo(pid string) map[string]string {
+	info := map[string]string{}
+
+	util.EachLine("/proc/"+pid+"/status", func(fields []string) {
+		info[strings.TrimRight(fields[0], ":")] = fields[1]
 	})
 
-	cmdLine := strings.FieldsFunc(readFile("/proc/"+pid+"/cmdline"), func(r rune) bool {
+	cmdLine := strings.FieldsFunc(util.ReadFile("/proc/"+pid+"/cmdline"), func(r rune) bool {
 		return !unicode.IsPrint(r)
 	})
-	fm["CmdLine"] = strings.Join(cmdLine, " ")
+	info["CmdLine"] = strings.Join(cmdLine, " ")
 
-	return fm
-}
-
-func readFile(filePath string) string {
-	contents, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Printf("[error] Could not read file %s: %s", filePath, err)
-		return ""
-	}
-
-	return string(contents)
-}
-
-func getFieldMap(s string, fn func(fm FieldMap, fields []string)) FieldMap {
-	fieldMap := FieldMap{}
-
-	for _, line := range strings.Split(s, "\n") {
-		if len(line) > 0 {
-			fn(fieldMap, strings.Fields(string(line)))
-		}
-	}
-	return fieldMap
-}
-
-func parse(s interface{}, cType string) interface{} {
-	if s == nil {
-		return nil
-	}
-
-	switch cType {
-	case "int":
-		result, _ := strconv.Atoi(s.(string))
-		return result
-	case "float":
-		result, _ := strconv.ParseFloat(s.(string), 64)
-		return result
-	}
-
-	return s.(string)
+	return info
 }
