@@ -6,9 +6,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 )
 
 var (
@@ -40,15 +38,7 @@ func main() {
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
-	resp := j{}
-	loadTime := time.Now()
-	resp["current_time"] = j{
-		"string": loadTime,
-		"unix":   loadTime.Unix(),
-	}
-
-	hostname, _ := os.Hostname()
-	resp["hostname"] = hostname
+	resp := map[string]interface{}{}
 
 	loadModules(resp, r.URL.Query().Get("modules"))
 
