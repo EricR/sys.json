@@ -74,16 +74,16 @@ curl http://localhost:5374/?modules=disk,load
   "disk": {
     "vda": {
       "reads": {
-        "Completed": 21955,
-        "Sectors": 1258186,
-        "Merged": 11170,
-        "TotalMs": 8302
+        "completed": 21955,
+        "sectors": 1258186,
+        "merged": 11170,
+        "total_ms": 8302
       },
       "writes": {
-        "Completed": 170359,
-        "Sectors": 8927472,
-        "Merged": 940398,
-        "TotalMs": 893929
+        "completed": 170359,
+        "sectors": 8927472,
+        "merged": 940398,
+        "total_ms": 893929
       },
       "io": {
         "in_progress": 0,
@@ -93,16 +93,16 @@ curl http://localhost:5374/?modules=disk,load
     },
     "vda1": {
       "reads": {
-        "Completed": 21781,
-        "Sectors": 1256794,
-        "Merged": 11170,
-        "TotalMs": 8295
+        "completed": 21781,
+        "sectors": 1256794,
+        "merged": 11170,
+        "total_ms": 8295
       },
       "writes": {
-        "Completed": 170359,
-        "Sectors": 8927472,
-        "Merged": 940398,
-        "TotalMs": 893929
+        "completed": 170359,
+        "sectors": 8927472,
+        "merged": 940398,
+        "total_ms": 893929
       },
       "io": {
         "in_progress": 0,
