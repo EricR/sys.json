@@ -1,7 +1,7 @@
 package proc
 
 import (
-	"github.com/ericr/sysjson/src/util"
+	"github.com/ericr/sysjson/util"
 	"io/ioutil"
 	"strings"
 	"unicode"

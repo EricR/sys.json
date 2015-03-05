@@ -2,7 +2,7 @@ package conntrack
 
 import (
 	"bufio"
-	"github.com/ericr/sysjson/src/util"
+	"github.com/ericr/sysjson/util"
 	"log"
 	"os/exec"
 	"strings"

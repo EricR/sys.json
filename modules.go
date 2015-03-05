@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/ericr/sysjson/src/plugins/conntrack"
-	"github.com/ericr/sysjson/src/plugins/host"
-	"github.com/ericr/sysjson/src/plugins/proc"
+	"github.com/ericr/sysjson/plugins/conntrack"
+	"github.com/ericr/sysjson/plugins/host"
+	"github.com/ericr/sysjson/plugins/proc"
 	"log"
 	"strings"
 )
