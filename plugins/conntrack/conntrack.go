@@ -30,7 +30,7 @@ func GetStats() map[string]interface{} {
 		return stats
 	}
 
-	cmd := exec.Command(path, "-L -o extend")
+	cmd := exec.Command(path, "-L")
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
@@ -45,35 +45,45 @@ func GetStats() map[string]interface{} {
 
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {
-		for scanner.Scan() {
-			fields := strings.Fields(scanner.Text())
+		var fields = strings.Fields(scanner.Text())
+		var state, src, dst, sport, dport string
 
-			state := strings.ToLower(fields[3])
+		if fields[0] == "tcp" {
+			state = strings.ToLower(fields[3])
 			counters[state] = counters[state] + 1
 
-			src := strings.Split(fields[4], "=")[1]
-			dst := strings.Split(fields[5], "=")[1]
-			sport := strings.Split(fields[6], "=")[1]
-			dport := strings.Split(fields[7], "=")[1]
+			src = strings.Split(fields[4], "=")[1]
+			dst = strings.Split(fields[5], "=")[1]
+			sport = strings.Split(fields[6], "=")[1]
+			dport = strings.Split(fields[7], "=")[1]
+		} else {
+			state = strings.ToLower(fields[0])
+			counters[state] = counters[state] + 1
 
-			conn := Connection{
-				State: state,
-				Source: ConnectionSide{
-					Address: src,
-					Port:    util.ParseInt(sport),
-				},
-				Destination: ConnectionSide{
-					Address: dst,
-					Port:    util.ParseInt(dport),
-				},
-			}
+			src = strings.Split(fields[3], "=")[1]
+			dst = strings.Split(fields[4], "=")[1]
+			sport = strings.Split(fields[5], "=")[1]
+			dport = strings.Split(fields[6], "=")[1]
+		}
 
-			connections = append(connections, conn)
+		conn := Connection{
+			State: state,
+			Source: ConnectionSide{
+				Address: src,
+				Port:    util.ParseInt(sport),
+			},
+			Destination: ConnectionSide{
+				Address: dst,
+				Port:    util.ParseInt(dport),
+			},
 		}
-		if err := scanner.Err(); err != nil {
-			log.Printf("[error] conntrack: %s", err)
-			return stats
-		}
+
+		connections = append(connections, conn)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Printf("[error] conntrack: %s", err)
+		return stats
 	}
 
 	if err := cmd.Wait(); err != nil {
