@@ -30,7 +30,7 @@ func GetStats() map[string]interface{} {
 		return stats
 	}
 
-	cmd := exec.Command(path, "-L -f -o extend")
+	cmd := exec.Command(path, "-L -o extend")
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
