@@ -4,6 +4,7 @@ import (
 	"github.com/ericr/sysjson/plugins/conntrack"
 	"github.com/ericr/sysjson/plugins/host"
 	"github.com/ericr/sysjson/plugins/proc"
+	"github.com/ericr/sysjson/plugins/disk"
 	"log"
 	"strings"
 )
@@ -44,7 +45,7 @@ var (
 		"disk": module{
 			Name: "disk",
 			Desc: "Provides stats on each disk",
-			fn:   proc.GetDiskInfo,
+			fn:   disk.GetDiskInfo,
 		},
 		"net": module{
 			Name: "net",
