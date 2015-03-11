@@ -17,6 +17,7 @@ What you do with that data is up to you.
 ## Running It
 
 ```bash
+go get
 go build
 ./sysjson --listen 0.0.0.0:5374
 ```
