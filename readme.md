@@ -1,6 +1,6 @@
 # sys.json
 
-Exposes system stats as a JSON API.
+Exposes server performance stats as an API.
 
 It works, but it's a work in progress. Things are subject to change without notice, so please use
 caution if you decide to use this in production. Assume there are bugs.
