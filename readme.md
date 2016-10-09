@@ -19,8 +19,10 @@ What you do with that data is up to you.
 ```bash
 go get
 go build
-./sysjson --listen 0.0.0.0:5374
+./sysjson --listen 127.0.0.1:5374
 ```
+
+**Important**: Note the bind to the loopback interface and *not* 0.0.0.0. This is not a service you'll want to expose to the Internet.
 
 ## Example Requests
 
